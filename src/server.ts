@@ -1,17 +1,7 @@
-import { randomUUID } from "node:crypto";
-import express from "express";
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
-import {
-    CryptoApisHttpClient,
-    formatCreditsForDescription,
-    loadSharedConfig,
-    McpLogger,
-    runWithApiKey,
-} from "@cryptoapis-io/mcp-shared";
+import { CryptoApisHttpClient, formatCreditsForDescription, loadSharedConfig, McpLogger, startHttpServer } from "@cryptoapis-io/mcp-shared";
 import { tools } from "./tools/index.js";
 import { registerResources } from "./resources/index.js";
 import { registerPrompts } from "./prompts/index.js";
@@ -65,52 +55,38 @@ function buildServer(client: CryptoApisHttpClient) {
 
 export type StartOptions =
     | { transport: "stdio"; apiKey?: string }
-    | { transport: "http"; host?: string; port?: number; path?: string; stateless?: boolean; apiKey?: string };
+    | {
+          transport: "http";
+          host?: string;
+          port?: number;
+          path?: string;
+          stateless?: boolean;
+          apiKey?: string;
+          authToken?: string;
+          allowedHosts?: string[];
+      };
 
 export async function startAmlServer(opts: StartOptions) {
     const isHttp = opts.transport === "http";
     const cfg = loadSharedConfig({ apiKey: opts.apiKey, allowMissingApiKey: isHttp });
     const client = new CryptoApisHttpClient(cfg);
-    const { server, logger } = buildServer(client);
-
     if (opts.transport === "stdio") {
+        const { server, logger } = buildServer(client);
         const transport = new StdioServerTransport();
         await server.connect(transport);
         logger.logInfo("cryptoapis-aml MCP running (stdio)");
         return;
     }
 
-    const host = opts.host ?? "0.0.0.0";
-    const port = opts.port ?? 3000;
-    const path = opts.path ?? "/mcp";
-    const stateless = opts.stateless ?? false;
-
-    const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: stateless ? undefined : () => randomUUID(),
-    });
-
-    await server.connect(transport);
-
-    const app = express();
-    app.use(express.json({ limit: "1mb" }));
-
-    app.all(path, (req, res) => {
-        const headerApiKey = req.headers["x-api-key"] as string | undefined;
-        if (headerApiKey && !cfg.apiKey) {
-            return runWithApiKey(headerApiKey, () => transport.handleRequest(req, res, req.body));
-        }
-        return transport.handleRequest(req, res, req.body);
-    });
-
-    app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
-
-    app.listen(port, host, () => {
-        logger.logInfo(`cryptoapis-aml MCP running (http) at http://${host}:${port}${path}`);
-        logger.logInfo(`mode: ${stateless ? "stateless" : "stateful"}`);
-        if (cfg.apiKey) {
-            logger.logInfo("API key: provided at startup — x-api-key request headers will be ignored");
-        } else {
-            logger.logInfo("API key: not provided — each request must include x-api-key header");
-        }
+    await startHttpServer({
+        name: CRYPTOAPIS_SERVER_INFO.name,
+        createServer: () => buildServer(client).server,
+        startupApiKey: cfg.apiKey,
+        host: opts.host,
+        port: opts.port,
+        path: opts.path,
+        stateless: opts.stateless,
+        authToken: opts.authToken,
+        allowedHosts: opts.allowedHosts,
     });
 }
