@@ -28,4 +28,28 @@ export function registerPrompts(server: McpServer): void {
             ],
         })
     );
+
+    server.registerPrompt(
+        "check-address-exposure",
+        {
+            description:
+                "Check a blockchain address's exposure to risky entities via the AML exposure graph (200,000 credits per request; 100,000 credits per page for paths)",
+            argsSchema: {
+                blockchain: z.string().describe("Blockchain protocol - one of the exposure-supported chains"),
+                address: z.string().describe("Blockchain address to check exposure for"),
+                rootAddress: z.string().optional().describe("Only return routes originating from this flagged root address"),
+            },
+        },
+        (args): GetPromptResult => ({
+            messages: [
+                {
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `Use the aml tool with action get-address-exposure to check address ${args.address} on ${args.blockchain} for exposure to risky entities (200,000 credits). Then use action list-address-exposure-paths (100,000 credits per page${args.rootAddress ? `, rootAddress ${args.rootAddress}` : ""}) to list the connecting paths, passing the response's nextStartingAfter back as startingAfter to page through all results. Report the exposure categories, risk levels, and the paths found.\n\n${formatAmlCapabilities(supportedCapabilities)}`,
+                    },
+                },
+            ],
+        })
+    );
 }

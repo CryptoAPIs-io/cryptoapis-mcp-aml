@@ -7,7 +7,10 @@ export function registerResources(server: McpServer): void {
     server.registerResource(
         "supported-capabilities",
         RESOURCE_URI,
-        { description: "Available AML tools, actions, and the blockchains screen-transaction supports" },
+        {
+            description:
+                "Available AML tools, actions, and the blockchains screen-transaction and the exposure actions support",
+        },
         (uri) => ({
             contents: [
                 {

@@ -1,5 +1,11 @@
 # @cryptoapis-io/mcp-aml
 
+## 0.3.0
+
+### Minor Changes
+
+- Add `get-address-exposure` and `list-address-exposure-paths` actions to the `aml` tool, exposing the AML exposure graph (FLEET-2652). These support a narrower 13-chain set (ethereum, binance-smart-chain, ethereum-classic, polygon, tron, bitcoin, bitcoin-cash, litecoin, dogecoin, dash, zcash, xrp, solana) than `screen-transaction`'s 19 chains; requests for an unsupported chain or an out-of-range `limit` are rejected before any HTTP call.
+
 ## 0.2.0
 
 ### Minor Changes

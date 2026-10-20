@@ -1,10 +1,14 @@
 import { AML_SCREENABLE_BLOCKCHAINS } from "../api/transactions/screen-transaction/types.js";
+import { AML_EXPOSURE_BLOCKCHAINS } from "../api/exposure/types.js";
 
 /**
  * Static resource describing the AML capabilities available in this package.
  *
  * verify-address has no blockchain parameter (address format alone identifies the chain);
- * screen-transaction requires an explicit blockchain from AML_SCREENABLE_BLOCKCHAINS.
+ * screen-transaction requires an explicit blockchain from AML_SCREENABLE_BLOCKCHAINS;
+ * get-address-exposure and list-address-exposure-paths require a blockchain from the
+ * narrower AML_EXPOSURE_BLOCKCHAINS (no exposure graph for arbitrum, avalanche, base,
+ * optimism, tezos or kaspa).
  */
 
 export type AmlCapability = {
@@ -21,6 +25,7 @@ export type AmlCapability = {
 export type SupportedCapabilitiesResource = {
     description: string;
     screenableBlockchains: readonly string[];
+    exposureBlockchains: readonly string[];
     capabilities: readonly AmlCapability[];
 };
 
@@ -38,13 +43,17 @@ export function formatAmlCapabilities(data: SupportedCapabilitiesResource): stri
         }
     }
     lines.push(`\nscreen-transaction supported blockchains: ${data.screenableBlockchains.join(", ")}`);
+    lines.push(
+        `\nget-address-exposure/list-address-exposure-paths supported blockchains: ${data.exposureBlockchains.join(", ")}`
+    );
     return lines.join("\n");
 }
 
 export const supportedCapabilities: SupportedCapabilitiesResource = {
     description:
-        "AML risk-screening tools for blockchain addresses and transactions. verify-address works across any supported chain from the address format alone; screen-transaction requires the blockchain to be specified explicitly.",
+        "AML risk-screening tools for blockchain addresses and transactions. verify-address works across any supported chain from the address format alone; screen-transaction, get-address-exposure and list-address-exposure-paths require the blockchain to be specified explicitly.",
     screenableBlockchains: AML_SCREENABLE_BLOCKCHAINS,
+    exposureBlockchains: AML_EXPOSURE_BLOCKCHAINS,
     capabilities: [
         {
             tool: "aml",
@@ -59,6 +68,17 @@ export const supportedCapabilities: SupportedCapabilitiesResource = {
                     name: "screen-transaction",
                     description: "Screen a transaction and its participants against AML data",
                     requiredParams: ["blockchain", "transactionHash"],
+                },
+                {
+                    name: "get-address-exposure",
+                    description: "Get an address's exposure to risky entities/categories in the AML exposure graph (200,000 credits per request)",
+                    requiredParams: ["blockchain", "address"],
+                },
+                {
+                    name: "list-address-exposure-paths",
+                    description: "List the paths connecting an address to risky entities in the AML exposure graph (100,000 credits per page)",
+                    requiredParams: ["blockchain", "address"],
+                    optionalParams: ["rootAddress", "limit", "startingAfter"],
                 },
             ],
         },

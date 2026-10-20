@@ -8,6 +8,8 @@ MCP server for [Crypto APIs](https://cryptoapis.io/) AML (Anti-Money Laundering)
 
 - Verify whether an address is flagged or associated with fraud, sanctions, ransomware, exploits, darknet markets, or other AML risk categories
 - Screen a transaction and its participants against AML data, returning risk score, risk band, and flagged addresses with roles/categories/severity
+- Get an address's exposure to risky entities/categories via the AML exposure graph
+- List the paths connecting an address to risky entities in the AML exposure graph, with cursor pagination
 
 ## Prerequisites
 
@@ -99,10 +101,14 @@ npx @modelcontextprotocol/inspector npx @cryptoapis-io/mcp-aml --api-key YOUR_AP
 |--------|-------------|
 | `verify-address` | Check if an address is flagged for fraud, sanctions, or other AML risk categories. Params: `address` |
 | `screen-transaction` | Screen a transaction and its participants against AML data. Params: `blockchain`, `transactionHash` |
+| `get-address-exposure` | Get an address's exposure to risky entities/categories in the AML exposure graph. Params: `blockchain`, `address` |
+| `list-address-exposure-paths` | List the paths connecting an address to risky entities in the AML exposure graph. Params: `blockchain`, `address`; optional `rootAddress` (only return routes originating from this flagged root address), `limit` (1-50, default 10), `startingAfter` (cursor — pass back the response's `nextStartingAfter` to page) |
 
 `screen-transaction` supports: ethereum, ethereum-classic, binance-smart-chain, bitcoin, bitcoin-cash, dash, dogecoin, litecoin, arbitrum, polygon, avalanche, optimism, base, zcash, xrp, solana, tezos, kaspa, tron.
 
-> **Note:** these are the highest per-call credit cost endpoints in the Crypto APIs suite — `verify-address` is 200,000 credits, `screen-transaction` is 500,000 credits per call.
+`get-address-exposure` and `list-address-exposure-paths` support a narrower set of 13 chains (no exposure graph for arbitrum, avalanche, base, optimism, tezos, or kaspa): ethereum, binance-smart-chain, ethereum-classic, polygon, tron, bitcoin, bitcoin-cash, litecoin, dogecoin, dash, zcash, xrp, solana.
+
+> **Note:** these are the highest per-call credit cost endpoints in the Crypto APIs suite — `verify-address` is 200,000 credits, `screen-transaction` is 500,000 credits per call, `get-address-exposure` is 200,000 credits per request, and `list-address-exposure-paths` is 100,000 credits per page.
 
 ## CLI Arguments
 
