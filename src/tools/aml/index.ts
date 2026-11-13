@@ -1,3 +1,4 @@
+import { READ_ONLY_TOOL } from "@cryptoapis-io/mcp-shared";
 import type { CryptoApisHttpClient, McpLogger, RequestResult } from "@cryptoapis-io/mcp-shared";
 import type { McpToolDef } from "../types.js";
 import { ACTION_BLOCKCHAINS, AmlToolSchema, type AmlToolInput } from "./schema.js";
@@ -25,6 +26,8 @@ Note: the credit cost of these endpoints is significant — see credits below.`;
 
 export const amlTool: McpToolDef<typeof AmlToolSchema> = {
     name: "aml",
+    title: "AML address and transaction screening",
+    annotations: READ_ONLY_TOOL,
     description: AML_DESCRIPTION,
     credits: {
         "verify-address": verifyAddressCredits,
